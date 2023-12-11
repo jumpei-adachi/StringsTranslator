@@ -66,4 +66,48 @@ class StringsWriterTests: XCTestCase {
 
 """)
   }
+  
+  func testContext() {
+    let list = StringsList(
+      manuals: [
+        .init(key: "apple", value: "りんご", context: nil),
+        .init(key: "blueberry", value: "ブルーベリー", context: "foo"),
+        .init(key: "strawberry", value: "いちご", context: "foo"),
+        .init(key: "melon", value: "メロン", context: "bar"),
+        .init(key: "banana", value: "バナナ", context: nil),
+        .init(key: "watermelon", value: "スイカ", context: "bar"),
+      ],
+      automatics: [
+        .init(key: "peach", value: "モモ", context: "bar"),
+      ]
+    )
+    
+    let string = StringsWriter.write(list: list)
+    XCTAssertEqual(
+      string,
+      """
+/* manual */
+"apple" = "りんご";
+
+/* context: foo */
+"blueberry" = "ブルーベリー";
+"strawberry" = "いちご";
+
+/* context: bar */
+"melon" = "メロン";
+
+/* context: nil */
+"banana" = "バナナ";
+
+/* context: bar */
+"watermelon" = "スイカ";
+
+/* automatic */
+
+/* context: bar */
+"peach" = "モモ";
+
+"""
+    )
+  }
 }
