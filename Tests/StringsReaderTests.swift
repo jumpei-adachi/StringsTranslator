@@ -78,4 +78,49 @@ class StringsTests: XCTestCase {
       )
     )
   }
+  
+  func testContext() throws {
+    let list = try StringsReader.read(string: """
+/* manual */
+/* context: foo */
+"apple" = "りんご";
+"orange" = "みかん";
+
+/* context: bar */
+"grape" = "ぶどう";
+"peach" = "もも";
+
+/* context: nil */
+"strawberry" = "いちご";
+"blueberry" = "ブルーベリー";
+
+/* automatic */
+"watermelon" = "スイカ";
+
+/* context: baz */
+"melon" = "メロン";
+
+/* manual */
+"banana" = "バナナ";
+""")
+    
+    XCTAssertEqual(
+      list,
+      .init(
+        manuals: [
+          .init(key: "apple", value: "りんご", context: "foo"),
+          .init(key: "orange", value: "みかん", context: "foo"),
+          .init(key: "grape", value: "ぶどう", context: "bar"),
+          .init(key: "peach", value: "もも", context: "bar"),
+          .init(key: "strawberry", value: "いちご", context: nil),
+          .init(key: "blueberry", value: "ブルーベリー", context: nil),
+          .init(key: "banana", value: "バナナ", context: nil),
+        ],
+        automatics: [
+          .init(key: "watermelon", value: "スイカ", context: nil),
+          .init(key: "melon", value: "メロン", context: "baz"),
+        ]
+      )
+    )
+  }
 }

@@ -81,8 +81,9 @@ func translate(baseURL: URL, settings: Settings, apiKey: APIKey) {
       let translator: any TextTranslator
       switch task.translationMethod {
       case .deepL:
+        var deepL = DeepLTextTranslator(apiKey: apiKey.deepL)
         translator = CachedTextTranslator(
-          translator: DeepLTextTranslator(apiKey: apiKey.deepL),
+          translator: deepL,
           cacheURL: baseURL.appending(component: settings.deepLCachePath)
         )
       case .google:
@@ -126,6 +127,14 @@ func translate(baseURL: URL, settings: Settings, apiKey: APIKey) {
         
         try StringsWriter.write(list: result, to: destinationURL)
       }
+    }
+  } catch let error as TranslationError {
+    switch error {
+    case .badStatusCode(let code): print("bad status code: \(code)")
+    case .invalidHTTPResponse: print("invalid http response")
+    case .unexpectedManyTranslations: print("unexpected many translations")
+    case .unsupportedLanguagePair: print("unsupported language pair")
+    case .unsupportedResponse: print("unsupported response")
     }
   } catch {
     fatalError(error.localizedDescription)

@@ -14,18 +14,29 @@ class StringsReader {
       case automatic
     }
     
+    var context: String? = nil
     var mode: Mode = .automatic
     for line in string.split(separator: "\n") {
       if line.starts(with: "/* manual */") {
         mode = .manual
+        context = nil
         continue
       }
       if line.starts(with: "/* automatic */") {
         mode = .automatic
+        context = nil
+        continue
+      }
+      if line.starts(with: "/* context: nil */") {
+        context = nil
+        continue
+      }
+      if let match = try! #/\/\* context: (.*) \*\//#.wholeMatch(in: line) {
+        context = String(match.output.1)
         continue
       }
       if case let (_, key, value)? = try #/^"(.*)"\s*=\s*"(.*)";$/#.wholeMatch(in: line)?.output {
-        let record = StringsRecord(key: String(key), value: String(value))
+        let record = StringsRecord(key: String(key), value: String(value), context: context)
         switch mode {
         case .manual:
           manuals.append(record)
