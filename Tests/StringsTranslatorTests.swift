@@ -15,7 +15,7 @@ struct TranslatorForTest: Translator {
 
 class StringsTranslatorTests: XCTestCase {
   func test() throws {
-    let translator = StringsTranslator(translator: TranslatorForTest())
+    let translator = StringsTranslator(translator: { _ in TranslatorForTest() })
     let list = StringsList(
       manuals: [
         .init(key: "apple", value: "Apple"),

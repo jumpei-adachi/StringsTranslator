@@ -1,7 +1,7 @@
 struct StringsTranslator {
-  let translator: any Translator
+  let translator: (StringsRecord) -> any Translator
   
-  init(translator: any Translator) {
+  init(translator: @escaping (StringsRecord) -> any Translator) {
     self.translator = translator
   }
   
@@ -9,7 +9,7 @@ struct StringsTranslator {
     return try StringsList(
       manuals: [],
       automatics: list.records.map { record in
-        StringsRecord(key: record.key, value: try translator.translate(record.value))
+        StringsRecord(key: record.key, value: try translator(record).translate(record.value))
       }
     )
   }

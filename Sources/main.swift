@@ -78,40 +78,45 @@ func translate(baseURL: URL, settings: Settings, apiKey: APIKey) {
     let localizationURL = baseURL.appending(component: settings.path)
     for task in settings.tasks {
       print("Translating \(task.sourceLanguage) into \(task.destinationLanguage)...")
-      let translator: any TextTranslator
-      switch task.translationMethod {
-      case .deepL:
-        var deepL = DeepLTextTranslator(apiKey: apiKey.deepL)
-        translator = CachedTextTranslator(
-          translator: deepL,
-          cacheURL: baseURL.appending(component: settings.deepLCachePath)
-        )
-      case .google:
-        translator = CachedTextTranslator(
-          translator: GoogleTextTranslator(apiKey: apiKey.google),
-          cacheURL: baseURL.appending(component: settings.googleCachePath)
-        )
-      case .deepLChinese:
-        translator = ChineseTextTranslator(
-          translator: CachedTextTranslator(
-            translator: DeepLTextTranslator(apiKey: apiKey.deepL),
-            cacheURL: baseURL.appending(component: settings.deepLCachePath)
-          )
-        )
-      }
       let sourceDirectoryURL = localizationURL.appending(component: "\(task.sourceLanguage).lproj")
       for target in settings.targets {
         let sourceURL = sourceDirectoryURL.appending(component: target)
         
         let list = try StringsReader.read(url: sourceURL)
         
-        var result = try StringsTranslator(
-          translator: TranslatorWrapper(
-            source: task.internalSourceLanguage,
-            target: task.internalDestinationLanguage,
-            translator: translator
-          )
-        ).translate(list: list)
+        let translatorWrapper = StringsTranslator(
+          translator: { record in
+            let translator: any TextTranslator
+            switch task.translationMethod {
+            case .deepL:
+              var deepL = DeepLTextTranslator(apiKey: apiKey.deepL)
+              deepL.preserveFormatting = true
+              deepL.context = record.context
+              translator = CachedTextTranslator(
+                translator: deepL,
+                cacheURL: baseURL.appending(component: settings.deepLCachePath)
+              )
+            case .google:
+              translator = CachedTextTranslator(
+                translator: GoogleTextTranslator(apiKey: apiKey.google),
+                cacheURL: baseURL.appending(component: settings.googleCachePath)
+              )
+            case .deepLChinese:
+              translator = ChineseTextTranslator(
+                translator: CachedTextTranslator(
+                  translator: DeepLTextTranslator(apiKey: apiKey.deepL),
+                  cacheURL: baseURL.appending(component: settings.deepLCachePath)
+                )
+              )
+            }
+            return TranslatorWrapper(
+              source: task.internalSourceLanguage,
+              target: task.internalDestinationLanguage,
+              translator: translator
+            )
+          }
+        )
+        var result = try translatorWrapper.translate(list: list)
         
         let destinationDirectoryURL = localizationURL.appending(component: "\(task.destinationLanguage).lproj")
         if !FileManager.default.fileExists(atPath: destinationDirectoryURL.path()) {
