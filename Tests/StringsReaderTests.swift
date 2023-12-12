@@ -123,4 +123,11 @@ class StringsTests: XCTestCase {
       )
     )
   }
+  
+  func testQuotes() throws {
+    let list = try StringsReader.read(string: """
+"foo" = "bar\"\"baz";
+""")
+    XCTAssertEqual(list, .init(manuals: [], automatics: [.init(key: "foo", value: "bar\"\"baz")]))
+  }
 }

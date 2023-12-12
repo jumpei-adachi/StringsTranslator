@@ -36,7 +36,7 @@ class StringsReader {
         continue
       }
       if case let (_, key, value)? = try #/^"(.*)"\s*=\s*"(.*)";$/#.wholeMatch(in: line)?.output {
-        let record = StringsRecord(key: String(key), value: String(value), context: context)
+        let record = StringsRecord(key: String(key), value: unescape(String(value)), context: context)
         switch mode {
         case .manual:
           manuals.append(record)
@@ -46,5 +46,9 @@ class StringsReader {
       }
     }
     return StringsList(manuals: manuals, automatics: automatics)
+  }
+  
+  private static func unescape(_ string: String) -> String {
+    string.replacingOccurrences(of: "\\\"", with: "\"")
   }
 }
