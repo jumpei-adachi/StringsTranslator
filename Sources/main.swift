@@ -87,6 +87,7 @@ func translate(baseURL: URL, settings: Settings, apiKey: APIKey) {
         let translatorWrapper = StringsTranslator(
           translator: { record in
             let translator: any TextTranslator
+            let hash: String?
             switch task.translationMethod {
             case .deepL:
               var deepL = DeepLTextTranslator(apiKey: apiKey.deepL)
@@ -96,11 +97,13 @@ func translate(baseURL: URL, settings: Settings, apiKey: APIKey) {
                 translator: deepL,
                 cacheURL: baseURL.appending(component: settings.deepLCachePath)
               )
+              hash = record.context
             case .google:
               translator = CachedTextTranslator(
                 translator: GoogleTextTranslator(apiKey: apiKey.google),
                 cacheURL: baseURL.appending(component: settings.googleCachePath)
               )
+              hash = nil
             case .deepLChinese:
               translator = ChineseTextTranslator(
                 translator: CachedTextTranslator(
@@ -108,11 +111,13 @@ func translate(baseURL: URL, settings: Settings, apiKey: APIKey) {
                   cacheURL: baseURL.appending(component: settings.deepLCachePath)
                 )
               )
+              hash = nil
             }
             return TranslatorWrapper(
               source: task.internalSourceLanguage,
               target: task.internalDestinationLanguage,
-              translator: translator
+              translator: translator,
+              hash: hash
             )
           }
         )
@@ -150,8 +155,9 @@ struct TranslatorWrapper: Translator {
   let source: String
   let target: String
   let translator: any TextTranslator
+  let hash: String?
   
   func translate(_ string: String) throws -> String {
-    try translator.translate(text: string, from: source, to: target)
+    try translator.translate(text: string, from: source, to: target, hash: hash)
   }
 }
